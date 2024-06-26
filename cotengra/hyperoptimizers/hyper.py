@@ -554,6 +554,9 @@ class HyperOptimizer(PathOptimizer):
                 f.cancel()
 
     def _maybe_report_result(self, setting, trial):
+        if trial is None:
+            return
+
         score = trial["score"]
 
         new_best = score < self.best_score
@@ -691,6 +694,9 @@ class HyperOptimizer(PathOptimizer):
 
         # assess the trials
         for trial in trials:
+            if trial is None:
+                continue
+
             # check if we have found a new best
             if trial["score"] < self.best["score"]:
                 self.trials_since_best = 0

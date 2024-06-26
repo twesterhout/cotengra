@@ -2,6 +2,7 @@
 
 import functools
 import itertools
+import sys
 from os.path import abspath, dirname, join
 
 from ..core import PartitionTreeBuilder, get_hypergraph
@@ -61,7 +62,7 @@ def kahypar_subgraph_find_membership(
     profile=None,
     mode="direct",
     objective="cut",
-    quiet=True,
+    quiet=False,
 ):
     import kahypar as kahypar
 
@@ -112,10 +113,14 @@ def kahypar_subgraph_find_membership(
         hypergraph_kwargs["edge_weights"] = edge_weights
         hypergraph_kwargs["node_weights"] = node_weights
 
+    if not quiet:
+        print(f"Hypergraph(**{hypergraph_kwargs})", file=sys.stderr)
     hypergraph = kahypar.Hypergraph(**hypergraph_kwargs)
 
     if fix_output_nodes:
         for i in onodes:
+            if not quiet:
+                print(f"hypergraph.fixNodeToBlock({i}, 0)", file=sys.stderr)
             hypergraph.fixNodeToBlock(i, 0)
 
         # silences various warnings
@@ -124,6 +129,13 @@ def kahypar_subgraph_find_membership(
     if profile is None:
         profile_mode = {"direct": "k", "recursive": "r"}[mode]
         profile = f"{objective}_{profile_mode}KaHyPar_sea20.ini"
+
+    if not quiet:
+        print(f'context.loadINIconfiguration("{join(get_kahypar_profile_dir(), profile)}")', file=sys.stderr)
+        print(f"context.setK({parts})", file=sys.stderr)
+        print(f"context.setSeed({seed})", file=sys.stderr)
+        print(f"context.setEpsilon({imbalance * parts})", file=sys.stderr)
+        print("kahypar.partition(hypergraph, context)", file=sys.stderr)
 
     context = kahypar.Context()
     context.loadINIconfiguration(join(get_kahypar_profile_dir(), profile))

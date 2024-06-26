@@ -7,6 +7,7 @@ import warnings
 import operator
 import functools
 import collections
+import sys
 
 
 _AUTO_BACKEND = None
@@ -397,7 +398,12 @@ class RayFuture:
         self._cancelled = False
 
     def result(self, timeout=None):
-        return get_ray().get(self._obj, timeout=timeout)
+        ray = get_ray()
+        try:
+            return ray.get(self._obj, timeout=timeout)
+        except ray.exceptions.WorkerCrashedError as e:
+            print(e, file=sys.stderr)
+            return None
 
     def done(self):
         return self._cancelled or bool(
